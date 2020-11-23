@@ -88,9 +88,11 @@ class TrianguloRoutes {
             yield database_1.db.conectarBD()
                 .then((mensaje) => __awaiter(this, void 0, void 0, function* () {
                 console.log(mensaje);
-                yield triangulo_1.Triangulos.findOne({ _nombre: nombre }, (error, doc) => {
-                    if (error)
+                yield triangulo_1.Triangulos.findOne({ _nombre: { $eq: nombre } }, (error, doc) => {
+                    if (error) {
                         console.log(error);
+                        res.json({ "error": "mensaje: " + error });
+                    }
                     else {
                         if (doc == null) {
                             console.log('No existe');
@@ -180,7 +182,7 @@ class TrianguloRoutes {
             const { nombre } = req.params;
             const { base, altura, lado2, lado3 } = req.body;
             yield database_1.db.conectarBD();
-            const doc = yield triangulo_1.Triangulos.findOneAndUpdate({ _nombre: nombre }, {
+            yield triangulo_1.Triangulos.findOneAndUpdate({ _nombre: nombre }, {
                 _nombre: nombre,
                 _base: base,
                 _lado2: lado2,
@@ -191,8 +193,14 @@ class TrianguloRoutes {
                 runValidators: true // para que se ejecuten las validaciones del Schema
             })
                 .then((docu) => {
-                console.log('Modificado Correctamente: ' + docu);
-                res.json(docu);
+                if (docu == null) {
+                    console.log('El triangulo que desea modificar no existe');
+                    res.json({ "Error": "No existe: " + nombre });
+                }
+                else {
+                    console.log('Modificado Correctamente: ' + docu);
+                    res.json(docu);
+                }
             })
                 .catch((err) => {
                 console.log('Error: ' + err);

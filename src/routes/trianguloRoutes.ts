@@ -88,14 +88,16 @@ class TrianguloRoutes {
     private getArea = async (req: Request, res: Response) => {
         let triangulo: Triangulo
         let sup: number = 0
-        const {nombre } = req.params
+        const { nombre } = req.params
         await db.conectarBD()
         .then( async (mensaje) => {
             console.log(mensaje)
-            await Triangulos.findOne({_nombre: nombre},
+            await Triangulos.findOne({_nombre: {$eq: nombre}},
                 (error, doc: any) => {
-                    if(error) console.log(error)
-                    else{
+                    if(error) {
+                        console.log(error)
+                        res.json({"error": "mensaje: "+error})
+                    }else{
                         if (doc == null) {
                             console.log('No existe')
                             res.json({})
@@ -138,7 +140,6 @@ class TrianguloRoutes {
                 console.log(triangulo)
                 res.json({"nombre": triangulo.nombre, "area": triangulo.area()})
             }
-
         })
         .catch((mensaje) => {
             res.send(mensaje)
@@ -182,7 +183,7 @@ class TrianguloRoutes {
                 new Triangulo(dTriangulo._nombre, dTriangulo._base, 
                         dTriangulo._lado2, dTriangulo._lado3)
             tmpTriangulo.altura = dTriangulo._altura 
-            const doc = {
+            const doc: tDoc = {
                 nombre:  dTriangulo._nombre,
                 area: tmpTriangulo.area()
             }
@@ -196,10 +197,10 @@ class TrianguloRoutes {
         await db.desconectarBD()   
     }
     private actualiza = async (req: Request, res: Response) => {
-        const { nombre }= req.params
+        const { nombre } = req.params
         const { base, altura, lado2, lado3 } = req.body
         await db.conectarBD()
-        const doc: any = await Triangulos.findOneAndUpdate(
+        await Triangulos.findOneAndUpdate(
                 { _nombre: nombre }, 
                 {
                     _nombre: nombre,
@@ -213,9 +214,15 @@ class TrianguloRoutes {
                     runValidators: true // para que se ejecuten las validaciones del Schema
                 }  
             )
-            .then((docu) => {
-                    console.log('Modificado Correctamente: '+ docu) 
-                    res.json(docu)
+            .then( (docu) => {
+                    if (docu==null){
+                        console.log('El triangulo que desea modificar no existe')
+                        res.json({"Error":"No existe: "+nombre})
+                    } else {
+                        console.log('Modificado Correctamente: '+ docu) 
+                        res.json(docu)
+                    }
+                    
                 }
             )
             .catch( (err) => {
